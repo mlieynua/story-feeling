@@ -8,11 +8,12 @@ from sklearn.preprocessing import StandardScaler,RobustScaler
 import MeCab
 import matplotlib.pyplot as plt
 import numpy as np
+from wordcloud import WordCloud
 #get_ipython().run_line_magic('matplotlib', 'inline')
 class StoryFeeling:
-    def __init__(self,text_file_path,model,title):
+    def __init__(self,text_file_path,title):
         self.text_file_path = text_file_path
-        self.model = model
+        self.model = wv.load('./latest-ja-word2vec-gensim-model/word2vec.gensim.model')
         self.title = title
     def process_text(self):
         with open(self.text_file_path,encoding='utf-8') as input_file:
@@ -28,7 +29,8 @@ class StoryFeeling:
                     sentence_array += sentence
         sentence_list = list(map(lambda x:x.strip().replace('\u3000','').replace('\n',''),sentence_list))
         self.sentence_list = sentence_list
-    def feeling_analyzer(self,feelingword):
+    def feeling_analyzer(self,feelingword,num):
+        self.feelingword = feelingword
         tagger = MeCab.Tagger('-Ochasen')
         tokenlist = []
         tokenlists = []
@@ -50,8 +52,9 @@ class StoryFeeling:
         vec_avg_list = []
         strong_flag = 0
         weak_flag = 0
-        for sen_num ,tokens in enumerate(tokenlists):
+        for tokens in tokenlists:
             vec_sum = 0
+            self.tokens = tokens
             for word in tokens:
                 #print(word)
                 if word in ["非常", "たいへん","極めて","たいそう","かなり","すごく","とても"]:
@@ -89,8 +92,8 @@ class StoryFeeling:
         dict_mean3 = {}
         for neg_idx in neg_idx_list:
             list_med_0[neg_idx] = -(list_med_0[neg_idx])
-        for idx in range(0,len(list_med_0)-2):
-            mean3 = round(sum(list_med_0[idx:idx+4])/4,4)
+        for idx in range(0,len(list_med_0)-(num-2)):
+            mean3 = round(sum(list_med_0[idx:idx+num])/num,num)
             dict_mean3[idx] = mean3
         sorted_dict_mean3 = sorted(dict_mean3.items(),key=lambda x:x[1],reverse=True)
         counth = 0
@@ -98,13 +101,13 @@ class StoryFeeling:
         highsentences_list = []
         lowsentences_list =[]
         for key , _ in sorted_dict_mean3:
-            highsentences = self.sentence_list[key:key+4]
+            highsentences = self.sentence_list[key:key+num]
             highsentences_list.append(highsentences)
             counth += 1
             if counth == 3:
                 break
         for key, _ in reversed(sorted_dict_mean3):
-            lowsentences = self.sentence_list[key:key+4]
+            lowsentences = self.sentence_list[key:key+num]
             lowsentences_list.append(lowsentences)
             countl += 1
             if countl == 3:
@@ -116,25 +119,29 @@ class StoryFeeling:
         #print(dict_mean3,highsentences_list,lowsentences_list)
     def make_graph(self):
         fig = plt.figure(figsize=(16,4))
-        ax = fig.add_subplot(1,1,1,title='The Little Match Girl')
+        ax = fig.add_subplot(1,1,1,title='Title : {}'.format(self.title))
         dic_to_list = list(self.feel_avg_dict.values())
         ax.plot(dic_to_list)
         
         ax.set_ylim([min(dic_to_list)-10, max(dic_to_list)+10])
         plt.show()
+        print('WORD : {}'.format(self.feelingword))
         print("1st high score:\n{}。".format('。'.join(self.high[0])))
         print("2nd high score:\n{}。".format('。'.join(self.high[1])))
         print("3rd high score:\n{}。".format('。'.join(self.high[2])))
         print("1st low score:\n{}。".format('。'.join(self.low[0])))
         print("2nd low score:\n{}。".format('。'.join(self.low[1])))
         print("3rd low score:\n{}。".format('。'.join(self.low[2])))
-
+        input_wordcloud = ' '.join(self.tokens) 
+        wc = WordCloud(width=960, height=720, background_color='white',colormap='summer',\
+                       font_path='../../../Windows/Fonts/HGRME.TTC').generate(input_wordcloud)
+        plt.imshow(wc)
+        plt.show()
 if __name__ == '__main__':
-    model = wv.load('./latest-ja-word2vec-gensim-model/word2vec.gensim.model')
     text_file_path = "machi.txt"
     title = 'The Little Match Girl'
-    st = StoryFeeling(text_file_path=text_file_path,model=model,title=title)
+    st = StoryFeeling(text_file_path=text_file_path,title=title)
     st.process_text()
-    st.feeling_analyzer('うれしい')
+    st.feeling_analyzer('うれしい',num=4)
     st.make_graph()
 

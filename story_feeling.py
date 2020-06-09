@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[3]:
-
 
 from gensim.models.word2vec import Word2Vec as wv
 import gensim
@@ -10,7 +8,7 @@ from sklearn.preprocessing import StandardScaler,RobustScaler
 import MeCab
 import matplotlib.pyplot as plt
 import numpy as np
-get_ipython().run_line_magic('matplotlib', 'inline')
+#get_ipython().run_line_magic('matplotlib', 'inline')
 class StoryFeeling:
     def __init__(self,text_file_path,model,title):
         self.text_file_path = text_file_path
@@ -100,13 +98,13 @@ class StoryFeeling:
         highsentences_list = []
         lowsentences_list =[]
         for key , _ in sorted_dict_mean3:
-            highsentences = sentence_list[key:key+4]
+            highsentences = self.sentence_list[key:key+4]
             highsentences_list.append(highsentences)
             counth += 1
             if counth == 3:
                 break
         for key, _ in reversed(sorted_dict_mean3):
-            lowsentences = sentence_list[key:key+4]
+            lowsentences = self.sentence_list[key:key+4]
             lowsentences_list.append(lowsentences)
             countl += 1
             if countl == 3:
